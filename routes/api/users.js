@@ -65,7 +65,9 @@ router.post('/',
                 }
             }
             // 返回 jsonwebton 
-            jwt.sign(payload, config.get('jwtSecret'),
+            jwt.sign(
+                payload,
+                config.get('jwtSecret'),
                 { expiresIn: 360000 },
                 (err, token) => {
                     if (err) throw err;
