@@ -26,10 +26,11 @@ router.post('/',
             return res.status(400).json({ errors: errors.array() });
         }
 
+        //  get these attributes from the client side.
         const { name, email, password } = req.body;
 
         try {
-            // 检查用户是否在
+            // Check if user exists by email
             let user = await User.findOne({ email });
 
             if (user) {
