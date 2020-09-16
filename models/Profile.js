@@ -68,23 +68,13 @@ const ProfileSchema = new mongoose.Schema({
                 type: String,
                 required: true
             },
-            fieldofstudy: {
+            major: {
                 type: String,
                 required: true
             },
-            from: {
+            graduateDate: {
                 type: Date,
                 required: true
-            },
-            to: {
-                type: Date
-            },
-            current: {
-                type: Boolean,
-                default: false
-            },
-            description: {
-                type: String
             }
         }
     ],
