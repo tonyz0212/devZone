@@ -116,7 +116,7 @@ router.post('/', [
 router.get('/', async (req, res) => {
 
     try {
-        const profiles = await Profile.find().populate('user',['name','avatar']);
+        const profiles = await Profile.find().populate('user', ['name', 'avatar']);
         res.json(profiles);
     } catch (error) {
         console.error(error.message);
@@ -131,21 +131,91 @@ router.get('/', async (req, res) => {
 router.get('/user/:user_id', async (req, res) => {
 
     try {
-        const profile = await Profile.findOne({user: req.params.user_id}).populate('user',['name','avatar']);
- 
-        if(!profile){
+        const profile = await Profile.findOne({ user: req.params.user_id }).populate('user', ['name', 'avatar']);
 
-            return res.status(400).json({msg:'No profile for this user.'});
+        if (!profile) {
+
+            return res.status(400).json({ msg: 'No profile for this user.' });
         }
         res.json(profile);
     } catch (error) {
         console.error(error.message);
-        if(error.kind === 'ObjectId'){
-            return res.status(400).json({msg:' The format of the profile ID you provided is not correct.'});
+        if (error.kind === 'ObjectId') {
+            return res.status(400).json({ msg: ' The format of the profile ID you provided is not correct.' });
         }
         res.status(500).send('Server Error');
     }
 });
 
 
+// @route   DELETE api/profile
+// @desc    Delete profile, user & posts
+// @access  Private
+router.delete('/', auth, async (req, res) => {
+
+    try {
+        // @todo - still need to remove users and it's posts 
+        // Remove profile 
+        await Profile.findOneAndRemove({ user: req.user.id });
+        // Remove user
+        await User.findOneAndRemove({ _id: req.user.id });
+
+        res.json({ msg: 'User removed' });
+    } catch (error) {
+        console.error(error.message);
+        res.status(500).send('Server Error');
+    }
+});
+
+// @route   PUT api/profile/experience
+// @desc    Add profile experience
+// @access  Private
+router.put('/experience', [auth, [
+    check('title', 'Title is required')
+        .not().notEmpty(),
+    check('company', 'Company is required')
+        .not().notEmpty(),
+    check('from', 'From Date is required')
+        .not().notEmpty()
+]], async (req, res) => {
+
+    const errors = validationResult(req);
+    if (!errors.isEmpty()) {
+        return res.status(400).json({ errors: errors.array() });
+    }
+
+    const {
+        title,
+        company,
+        location,
+        from,
+        to,
+        current,
+        description
+    } = req.body;
+
+
+    const newExp = {
+        title,
+        company,
+        location,
+        from,
+        to,
+        current,
+        description
+    }
+
+    try {
+        const profile = await Profile.findOne({ user: req.user.id });
+
+        // push the beginning, so the most recent one show first.
+        profile.experience.unshift(newExp);
+        await profile.save();
+        res.json(profile);
+    } catch (error) {
+        console.error(error.message);
+        res.status(500).send('Server Error');
+    }
+}
+);
 module.exports = router;
