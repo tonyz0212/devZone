@@ -24,6 +24,8 @@ router.get('/me', auth, async (req, res) => {
     }
     catch (err) {
         console.error(err.message);
+        console.log('wdf is going on');
+        res.send('wdf ???')
         res.status(500).send('Server Error');
 
     }
@@ -32,7 +34,7 @@ router.get('/me', auth, async (req, res) => {
 // @route   POST api/profile
 // @desc    Create or update a user profile
 // @access  Private
-router.post('./', [
+router.post('/', [
     auth, [
         check('status', 'Status is required')
             .not()
@@ -44,6 +46,68 @@ router.post('./', [
     if (!errors.isEmpty()) {
         return res.status(400).json({ errors: errors.array() });
     }
+    // using destructure to get these attributes
+    const {
+        company,
+        website,
+        location,
+        bio,
+        status,
+        githubusername,
+        skills,
+        youtube,
+        facebook,
+        twitter,
+        instagram,
+        linkedin
+    } = req.body;
+
+    // Build profile object
+    const profileFields = {};
+    profileFields.user = req.user.id;
+    // check if user put in the fields, if yes then save it into profile object.
+    if (company) profileFields.company = company;
+    if (website) profileFields.website = website;
+    if (location) profileFields.location = location;
+    if (bio) profileFields.bio = bio;
+    if (status) profileFields.status = status;
+    if (githubusername) profileFields.githubusername = githubusername;
+    if (skills) {
+        // split the skills by command and remove the spaces.
+        profileFields.skills = skills.split(',').map(skill => skill.trim());
+    }
+
+    // Build social object
+    profileFields.social = {}
+    if (youtube) profileFields.social.youtube = youtube;
+    if (twitter) profileFields.social.twitter = twitter;
+    if (facebook) profileFields.social.facebook = facebook;
+    if (linkedin) profileFields.social.linkedin = linkedin;
+    if (instagram) profileFields.social.instagram = instagram;
+
+    try {
+        // look for a profile from a user
+        let profile = await Profile.findOne({ user: req.user.id });
+
+        if (profile) {
+            // Update
+            profile = await Profile.findOneAndUpdate({ user: req.user.id }, { $set: profileFields }, { new: true });
+            return res.json(profile);
+        }
+
+        // Create
+        profile = new Profile(profileFields);
+        await profile.save();
+        res.json(profile);
+
+    }
+    catch (err) {
+        console.error(err.message);
+        res.status(500).send('Server Error')
+
+    }
+   
+
 });
 
 module.exports = router;
